@@ -5,10 +5,15 @@ import React, {
   Text,
   View,
   ListView,
-  TextInput
+  TextInput,
+  ScrollView,
+  TouchableHighlight,
+  RecyclerViewBackedScrollView
 } from 'react-native';
 import moment from 'moment';
 import update from 'react-addons-update';
+import NavBar, { NavButton, NavButtonText, NavTitle } from 'react-native-nav'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
 
 var MOCKED_MESSAGES_DATA = [
@@ -29,32 +34,58 @@ var MOCKED_MESSAGES_DATA = [
   {username: 'Zane',    timestamp: '2016-04-15T12:29:14', body: 'Test Message'},
 ];
 
+class MyNavBar extends Component {
+  render() {
+    return (
+      <NavBar>
+        <NavButton onPress={() => alert('hi')}>
+          <NavButtonText>
+            {"Rooms"}
+          </NavButtonText>
+        </NavButton>
+        <NavTitle>
+          {"House Homies"}
+        </NavTitle>
+        <NavButton onPress={() => alert('hi')}>
+          <NavButtonText>
+            {"Settings"}
+          </NavButtonText>
+        </NavButton>
+      </NavBar>
+    );
+  }
+}
+
 class HouseHomies extends Component {
   constructor(props) {
     super(props);
+    this.messages = MOCKED_MESSAGES_DATA;
     this.state = {
-      messages: MOCKED_MESSAGES_DATA,
       dataSource: new ListView.DataSource({
         rowHasChanged: (row1, row2) => row1 !== row2,
       }),
     };
   }
-
+  
   componentDidMount() {
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(this.state.messages)   
+      dataSource: this.state.dataSource.cloneWithRows(this.messages)   
     });
   }
   
   _sendMessage(text) {
     var message = { username: "Hubot", timestamp: moment().format(), body: text };
-    var newMessages = update(this.state.messages, {$push: [message]});
+    
+    this.messages.push(message);
+    var messages = this.messages;
+    var messageIds = messages.map((row, index) => index).reverse();
+    
     this.setState({ 
-      messages: newMessages,
-      dataSource: this.state.dataSource.cloneWithRows(newMessages)
+      dataSource: this.state.dataSource.cloneWithRows(messages, messageIds)
     });
+    this.refs.messages.scrollTo({y: messages.length * -1 * 25, animated: true});
   }
-
+  
   renderMessage(message) {
     let date = moment(message.timestamp).calendar();
     return (
@@ -70,37 +101,36 @@ class HouseHomies extends Component {
 
   render() {
     return (
-      <View>
-        <View style={styles.jumbotron}>
-          <Text style={styles.jumbotronText}>House Homies</Text>
+      <View  style={{flex: 1}}>
+        <MyNavBar/>
+        <View style={{flex: 1}}>
+          <ListView
+            renderScrollComponent={props => <InvertibleScrollView {...props} inverted />}
+            dataSource={this.state.dataSource}
+            renderRow={this.renderMessage}
+            style={styles.listView}
+            ref="messages"
+          />
         </View>
-        <TextInput
-          style={{height: 40, padding: 5}}
-          returnKeyType={'send'}
-          placeholder = "Message"
-          value={this.state.messageInput}
-          onChangeText={(messageInput) => this.setState({messageInput})}
-          onSubmitEditing={(event) => this._sendMessage(event.nativeEvent.text)}
-        />
-        <ListView
-          renderScrollComponent={props => <InvertibleScrollView {...props} inverted />}
-          dataSource={this.state.dataSource}
-          renderRow={this.renderMessage}
-          style={styles.listView}
-        />
+        <View style={{height: 40, padding: 5, flexDirection: "row"}}>
+          <TextInput
+            style={{flex: 0.8}}
+            returnKeyType={'send'}
+            placeholder = "Message"
+            value={this.state.messageInput}
+            onChangeText={(messageInput) => this.setState({messageInput})}
+            onSubmitEditing={(event) => this._sendMessage(event.nativeEvent.text)}
+          />
+          <TouchableHighlight style={{flex: 0.2}} onPress={() => this._sendMessage("Pressed send button")}>
+            <Text>Send</Text>
+          </TouchableHighlight>
+        </View>
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  jumbotron: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'lightblue',
-    paddingTop: 25,
-    paddingBottom: 10,
-  },
   listView: {
     paddingTop: 10,
     backgroundColor: '#F5FCFF',
