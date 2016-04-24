@@ -8,26 +8,48 @@ import React, {
   Component,
   StyleSheet,
   Text,
+  TextInput,
+  TouchableHighlight,
   View
 } from 'react-native';
 
 class HouseHomies extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      text: text.joinExistingDefault,
+    };
+  }
+
+  componentDidMount() {}
+
   render() {
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
+        <TextInput
+          style={styles.textInput}
+          onChangeText={(text) => this.setState({text})}
+          value={this.state.text} />
+        <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{}}>
+          <View>
+            <Text style={styles.buttonText}>Join</Text>
+          </View>
+        </TouchableHighlight>
+        <Text>
+          OR
         </Text>
-        <Text style={styles.instructions}>
-          To get started, edit index.ios.js
-        </Text>
-        <Text style={styles.instructions}>
-          Press Cmd+R to reload,{'\n'}
-          Cmd+D or shake for dev menu
-        </Text>
+        <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{}}>
+          <View>
+            <Text style={styles.buttonText}>Generate New Building</Text>
+          </View>
+        </TouchableHighlight>
       </View>
     );
   }
+}
+
+const text = {
+  joinExistingDefault: 'Join existing building',
 }
 
 const styles = StyleSheet.create({
@@ -36,6 +58,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+  },
+  textInput: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
   },
   welcome: {
     fontSize: 20,
@@ -46,6 +73,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#333333',
     marginBottom: 5,
+  },
+  button: {
+    backgroundColor: 'gray',
+    padding: 5,
   },
 });
 
