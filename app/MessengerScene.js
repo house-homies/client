@@ -14,7 +14,6 @@ import React, {
 var GiftedMessenger = require('react-native-gifted-messenger');
 var Communications = require('react-native-communications');
 
-
 var STATUS_BAR_HEIGHT = Navigator.NavigationBar.Styles.General.StatusBarHeight;
 if (Platform.OS === 'android') {
   var ExtraDimensions = require('react-native-extra-dimensions-android');

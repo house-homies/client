@@ -7,9 +7,6 @@ let Router = {
   MessengerScene() {
     return {
       getSceneClass() {
-        if (Platform.OS === 'ios') {
-          StatusBar.setBarStyle('light-content');
-        }
         return require('./MessengerScene');
       },
       getTitle() {
@@ -24,7 +21,7 @@ let Router = {
         return require('./JoinRoomScene');
       },
       getTitle() {
-        return 'Join New Room';
+        return 'Join Room';
       }
     }
   },

@@ -18,13 +18,6 @@ class Navigation extends Component {
         style={{flex: 1}}
         sceneStyle={{paddingTop: Navigator.NavigationBar.Styles.General.TotalNavHeight}}
         showNavigationBar={true}
-        navigationBarStyle={{
-          backgroundColor: '#007aff',
-          borderBottomWidth: 0,
-        }}
-        titleStyle={{
-          color: '#ffffff',
-        }}
       />
     );
   }
