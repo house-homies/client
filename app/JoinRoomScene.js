@@ -26,7 +26,7 @@ class JoinRoomScene extends Component {
           value={this.state.text} />
         <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
           let route = Router.MessengerScene();
-          this.props.navigator.push(route); 
+          this.props.navigator.replace(route); 
         }}>
           <View>
             <Text style={styles.buttonText}>Join</Text>
