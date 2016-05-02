@@ -34,7 +34,14 @@ let Router = {
       },
       getTitle() {
         return 'Settings';
-      }
+      },
+      renderLeftButton(navigator) {
+        return (
+          <Button onPress={() => { navigator.pop() }}>
+            Back
+          </Button>
+        );
+      },
     }
   },
 
