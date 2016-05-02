@@ -38,7 +38,8 @@ class SettingsScene extends Component {
         code if you need to rejoin!</Text>
         <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
           let route = Router.JoinRoomScene();
-          this.props.navigator.replace(route);
+          this.props.navigator.replaceAtIndex(route, 0);
+          this.props.navigator.popToTop();
         }}>
           <View>
             <Text style={styles.buttonText}>Leave Room</Text>
