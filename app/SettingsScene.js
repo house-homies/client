@@ -1,4 +1,5 @@
 import React, {
+  Alert,
   Component,
   StyleSheet,
   Text,
@@ -24,8 +25,8 @@ class SettingsScene extends Component {
       <View style={styles.container}>
         <Text>You are currently {this.state.username}.</Text>
         <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
-          var currentName = this.state.username;
-          var newName = currentName == '[User Identifier]' ?
+          let currentName = this.state.username;
+          let newName = currentName == '[User Identifier]' ?
                         '[Other User Identifier]' : '[User Identifier]';
           this.setState({username: newName});
         }}>
@@ -37,9 +38,18 @@ class SettingsScene extends Component {
         <Text>Press the button below to leave the room. Make sure you have the access
         code if you need to rejoin!</Text>
         <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
-          let route = Router.JoinRoomScene();
-          this.props.navigator.replaceAtIndex(route, 0);
-          this.props.navigator.popToTop();
+          Alert.alert(
+            'Are you sure?',
+            'Once you leave this room, you\'ll need the access code to rejoin again.',
+            [
+              {text: 'Cancel', onPress: () => {}},
+              {text: 'I\'m sure!', onPress: () => {
+                let route = Router.JoinRoomScene();
+                this.props.navigator.replaceAtIndex(route, 0);
+                this.props.navigator.popToTop();
+              }}
+            ]
+          );
         }}>
           <View>
             <Text style={styles.buttonText}>Leave Room</Text>
