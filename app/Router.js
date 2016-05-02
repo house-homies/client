@@ -3,6 +3,8 @@ import React, {
   Platform,
 } from 'react-native';
 
+var Button = require('react-native-button');
+
 let Router = {
   MessengerScene() {
     return {
@@ -12,7 +14,28 @@ let Router = {
       getTitle() {
         return 'House Homies';
       },
+      renderRightButton(navigator) {
+        return (
+          <Button onPress={() => {
+            let route = Router.SettingsScene();
+            navigator.push(route);
+          }}>
+            Settings
+          </Button>
+        );
+      },
     };
+  },
+
+  SettingsScene() {
+    return {
+      getSceneClass() {
+        return require('./SettingsScene');
+      },
+      getTitle() {
+        return 'Settings';
+      }
+    }
   },
 
   JoinRoomScene() {
@@ -26,5 +49,6 @@ let Router = {
     }
   },
 };
+
 
 module.exports = Router;
