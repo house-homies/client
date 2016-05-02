@@ -33,6 +33,17 @@ class SettingsScene extends Component {
             <Text style={styles.buttonText}>Reroll Username</Text>
           </View>
         </TouchableHighlight>
+
+        <Text>Press the button below to leave the room. Make sure you have the access
+        code if you need to rejoin!</Text>
+        <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
+          let route = Router.JoinRoomScene();
+          this.props.navigator.replace(route);
+        }}>
+          <View>
+            <Text style={styles.buttonText}>Leave Room</Text>
+          </View>
+        </TouchableHighlight>
       </View>
     );
   }
