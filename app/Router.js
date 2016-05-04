@@ -1,4 +1,5 @@
 import React, {
+  AsyncStorage,
   StatusBar,
   Platform,
 } from 'react-native';

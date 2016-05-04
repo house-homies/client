@@ -1,6 +1,7 @@
 'use strict';
 
 import React, {
+  AsyncStorage,
   Linking,
   Platform,
   ActionSheetIOS,
@@ -35,11 +36,28 @@ class MessengerScene extends Component {
       isLoadingEarlierMessages: false,
       typingMessage: '',
       allLoaded: false,
+      roomId: '',
+      username: '',
     };
+
 
   }
 
   componentDidMount() {
+    AsyncStorage.getItem('roomId', (error, result) => {
+      if (error) {
+        this.setState({roomId: '[ERROR]'});
+      } else {
+        this.setState({roomId: result,});
+      }
+    });
+    AsyncStorage.getItem('username', (error, result) => {
+      if (error) {
+        this.setState({username: '[ERROR]'});
+      } else {
+        this.setState({username: result,});
+      }
+    });
     this._isMounted = true;
 
     setTimeout(() => {
@@ -154,6 +172,8 @@ class MessengerScene extends Component {
 
   render() {
     return (
+      <View>
+      <Text>In room {this.state.roomId}.</Text>
       <GiftedMessenger
         ref={(c) => this._GiftedMessenger = c}
 
@@ -178,6 +198,7 @@ class MessengerScene extends Component {
 
         typingMessage={this.state.typingMessage}
       />
+      </View>
     );
   }
 

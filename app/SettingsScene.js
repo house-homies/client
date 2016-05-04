@@ -1,4 +1,5 @@
 import React, {
+  AsyncStorage,
   Alert,
   Component,
   StyleSheet,
@@ -9,15 +10,22 @@ import React, {
 } from 'react-native';
 
 var Router = require('./Router.js');
+var HORSE = require('./HORSE/HORSE.JS');
 
 class SettingsScene extends Component {
   constructor(props) {
     super(props);
-    this.state = {username: '[User Identifier]'};
+    this.state = {username: ''};
   }
 
-  goBack() {
-    this.props.navigator.pop();
+  componentDidMount() {
+    AsyncStorage.getItem('username', (error, result) => {
+      if (error) {
+        this.setState({username: '[ERROR]'});
+      } else {
+        this.setState({username: result,});
+      }
+    });
   }
 
   render() {
@@ -25,9 +33,8 @@ class SettingsScene extends Component {
       <View style={styles.container}>
         <Text>You are currently {this.state.username}.</Text>
         <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
-          let currentName = this.state.username;
-          let newName = currentName == '[User Identifier]' ?
-                        '[Other User Identifier]' : '[User Identifier]';
+          let newName = HORSE.RANDOMHORSENAME();
+          AsyncStorage.setItem("username", newName);
           this.setState({username: newName});
         }}>
           <View>
@@ -44,6 +51,7 @@ class SettingsScene extends Component {
             [
               {text: 'Cancel', onPress: () => {}},
               {text: 'I\'m sure!', onPress: () => {
+                AsyncStorage.removeItem('roomId');
                 let route = Router.JoinRoomScene();
                 this.props.navigator.replaceAtIndex(route, 0);
                 this.props.navigator.popToTop();
