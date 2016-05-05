@@ -10,6 +10,7 @@ import React, {
 
 var Router = require('./Router.js');
 var getName = require('./nameGen.js');
+var RSAKey = require('react-native-rsa');
 
 class JoinRoomScene extends Component {
   constructor(props) {
@@ -33,13 +34,25 @@ class JoinRoomScene extends Component {
     }
   }
 
+  async setKeys() {
+    try {
+      const bits = 1024;
+      const exponent = '10001'; // must be a string. This is hex string. decimal = 65537
+      var rsa = new RSAKey();
+      rsa.generate(bits, exponent);
+
+      AsyncStorage.setItem('publicKey', JSON.stringify(rsa.getPublicString())); // return json encoded string
+      AsyncStorage.setItem('privateKey', JSON.stringify(rsa.getPrivateString())); // return json encoded string
+    } catch (error) {}
+  }
+
   async setName() {
     try {
       var username = await AsyncStorage.getItem("username");
       if (username === null) {
         // generate username
         var username = getName();
-        AsyncStorage.setItem("username", username);
+        AsyncStorage.setItem("username", 'butts');
       }
     } catch (error) {}
   }
@@ -47,6 +60,7 @@ class JoinRoomScene extends Component {
   joinRoom(roomId) {
     // TODO: set room ID in local storage
     this.setName();
+    this.setKeys();
     AsyncStorage.setItem("roomId", roomId);
     Router.RoomId = roomId;
     let route = Router.MessengerScene();

@@ -16,6 +16,7 @@ require("./UserAgent");
 var io = require("socket.io-client/socket.io");
 var GiftedMessenger = require('react-native-gifted-messenger');
 var Communications = require('react-native-communications');
+var RSAKey = require('react-native-rsa');
 
 var STATUS_BAR_HEIGHT = Navigator.NavigationBar.Styles.General.StatusBarHeight;
 if (Platform.OS === 'android') {
@@ -40,24 +41,22 @@ class MessengerScene extends Component {
       allLoaded: false,
       roomId: '',
       username: '',
+      publicKey: {},
+      privateKey: {},
     };
   }
 
-  componentDidMount() {
-    AsyncStorage.getItem('roomId', (error, result) => {
-      if (error) {
-        this.setState({roomId: '[ERROR]'});
-      } else {
-        this.setState({roomId: result,});
-        this.socket.emit('join room', result);
-      }
-    });
-    AsyncStorage.getItem('username', (error, result) => {
-      if (error) {
-        this.setState({username: '[ERROR]'});
-      } else {
-        this.setState({username: result,});
-      }
+  async componentDidMount() {
+    var roomId = await AsyncStorage.getItem('roomId');
+    var username = await AsyncStorage.getItem('username');
+    var publicKey = await AsyncStorage.getItem('publicKey');
+    var privateKey = await AsyncStorage.getItem('privateKey');
+
+    this.setState({
+      roomId: roomId,
+      username: username,
+      publicKey: JSON.parse(publicKey),
+      privateKey: JSON.parse(privateKey)
     });
 
     this._isMounted = true;
@@ -107,13 +106,17 @@ class MessengerScene extends Component {
 
   handleSend(message = {}) {
     message.name = this.state.username;
+    message.pkey = this.state.publicKey;
 
-    // Send message.text to your server
-    // this.socket.send(JSON.stringify(message));
+    var rsa = new RSAKey();
+    rsa.setPublicString(this.state.privateKey);
+    var originText = message.text;
+    message.text = rsa.encrypt(originText);
+
     this.socket.emit('new message',  message);
 
-    // simulating server-side unique id generation    
-    message.uniqueId = Math.round(Math.random() * 10000); 
+    // simulating server-side unique id generation
+    message.uniqueId = Math.round(Math.random() * 10000);
     this.setMessages(this._messages.concat(message));
 
     // if you couldn't send the message to your server :
@@ -123,6 +126,11 @@ class MessengerScene extends Component {
   handleReceive(message = {}) {
     // make sure that your message contains :
     // text, name, image, position: 'left', date, uniqueId
+    var rsa = new RSAKey();
+    rsa.setPrivateString(message.pkey);
+    message.text = rsa.decrypt(message.text);
+    console.log('hey');
+
     message.position = 'left';
     message.image = null;
     this.setMessages(this._messages.concat(message));
