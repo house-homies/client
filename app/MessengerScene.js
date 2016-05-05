@@ -12,6 +12,8 @@ import React, {
   Component,
 } from 'react-native';
 
+require("./UserAgent");
+var io = require("socket.io-client/socket.io");
 var GiftedMessenger = require('react-native-gifted-messenger');
 var Communications = require('react-native-communications');
 
@@ -28,8 +30,8 @@ class MessengerScene extends Component {
     super(props);
 
     // this.socket = new WebSocket("ws://iccroutes.com:5000");
-    this.socket = new WebSocket("ws://localhost:8000");
-
+    // this.socket = new WebSocket("ws://localhost:8000");
+    this.socket = io("localhost:3000", {jsonp:false});
     this._isMounted = false;
     this._messages = this.getInitialMessages();
 
@@ -49,6 +51,7 @@ class MessengerScene extends Component {
         this.setState({roomId: '[ERROR]'});
       } else {
         this.setState({roomId: result,});
+        this.socket.emit('join room', result);
       }
     });
     AsyncStorage.getItem('username', (error, result) => {
@@ -58,35 +61,13 @@ class MessengerScene extends Component {
         this.setState({username: result,});
       }
     });
+
     this._isMounted = true;
 
-    this.socket.onmessage = (msg) => {
-      this.handleReceive(JSON.parse(msg.data));
-    };
-
-    setTimeout(() => {
-      this.setState({
-        typingMessage: 'React-Bot is typing a message...',
-      });
-    }, 1000); // simulating network
-
-    setTimeout(() => {
-      this.setState({
-        typingMessage: '',
-      });
-    }, 3000); // simulating network
-
-
-    setTimeout(() => {
-      this.handleReceive({
-        text: 'Hello Awesome Developer',
-        name: 'React-Bot',
-        image: {uri: 'https://facebook.github.io/react/img/logo_og.png'},
-        position: 'left',
-        date: new Date(),
-        uniqueId: Math.round(Math.random() * 10000), // simulating server-side unique id generation
-      });
-    }, 3300); // simulating network
+    this.socket.on('new message', (msg) => {
+      console.log(msg);
+      this.handleReceive(JSON.parse(msg.message));
+    });
   }
 
   componentWillUnmount() {
@@ -147,7 +128,8 @@ class MessengerScene extends Component {
     message.name = this.state.username;
 
     // Send message.text to your server
-    this.socket.send(JSON.stringify(message));
+    // this.socket.send(JSON.stringify(message));
+    this.socket.emit('new message', {data: message});
 
     // simulating server-side unique id generation    
     message.uniqueId = Math.round(Math.random() * 10000); 

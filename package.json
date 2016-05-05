@@ -13,6 +13,7 @@
     "react-native-communications": "^1.0.1",
     "react-native-extra-dimensions-android": "^0.17.0",
     "react-native-gifted-messenger": "*",
+    "socket.io-client": "^1.4.6",
     "starwars-names-mb": "^1.1.0"
   }
 }
