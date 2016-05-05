@@ -41,8 +41,8 @@ class JoinRoomScene extends Component {
       var rsa = new RSAKey();
       rsa.generate(bits, exponent);
 
-      AsyncStorage.setItem('publicKey', JSON.stringify(rsa.getPublicString())); // return json encoded string
-      AsyncStorage.setItem('privateKey', JSON.stringify(rsa.getPrivateString())); // return json encoded string
+      AsyncStorage.setItem('publicKey', rsa.getPublicString()); // return json encoded string
+      AsyncStorage.setItem('privateKey', rsa.getPrivateString()); // return json encoded string
     } catch (error) {}
   }
 

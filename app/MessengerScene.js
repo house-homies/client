@@ -55,8 +55,8 @@ class MessengerScene extends Component {
     this.setState({
       roomId: roomId,
       username: username,
-      publicKey: JSON.parse(publicKey),
-      privateKey: JSON.parse(privateKey)
+      publicKey: publicKey,
+      privateKey: privateKey
     });
 
     this._isMounted = true;
@@ -99,17 +99,16 @@ class MessengerScene extends Component {
     this._messages = messages;
 
     // append the message
-    this.setState({
-      messages: messages,
-    });
+    this.setState({messages: messages});
   }
 
   handleSend(message = {}) {
     message.name = this.state.username;
-    message.pkey = this.state.publicKey;
+    message.pkey = this.state.privateKey;
+    console.log(message.pkey);
 
     var rsa = new RSAKey();
-    rsa.setPublicString(this.state.privateKey);
+    rsa.setPublicString(this.state.publicKey);
     var originText = message.text;
     message.text = rsa.encrypt(originText);
 
@@ -124,12 +123,13 @@ class MessengerScene extends Component {
   }
 
   handleReceive(message = {}) {
+    console.log(message.pkey);
+
     // make sure that your message contains :
     // text, name, image, position: 'left', date, uniqueId
     var rsa = new RSAKey();
     rsa.setPrivateString(message.pkey);
     message.text = rsa.decrypt(message.text);
-    console.log('hey');
 
     message.position = 'left';
     message.image = null;
