@@ -29,9 +29,7 @@ class MessengerScene extends Component {
   constructor(props) {
     super(props);
 
-    // this.socket = new WebSocket("ws://iccroutes.com:5000");
-    // this.socket = new WebSocket("ws://localhost:8000");
-    this.socket = io("localhost:3000", {jsonp:false});
+    this.socket = io("http://iccroutes.com:5000", {jsonp:false, transports: ['websocket']});
     this._isMounted = false;
     this._messages = this.getInitialMessages();
 
@@ -66,7 +64,7 @@ class MessengerScene extends Component {
 
     this.socket.on('new message', (msg) => {
       console.log(msg);
-      this.handleReceive(JSON.parse(msg.message));
+      this.handleReceive(msg);
     });
   }
 
@@ -75,24 +73,7 @@ class MessengerScene extends Component {
   }
 
   getInitialMessages() {
-    return [
-      {
-        text: 'Are you building a chat app?',
-        name: 'React-Bot',
-        image: {uri: 'https://facebook.github.io/react/img/logo_og.png'},
-        position: 'left',
-        date: new Date(2016, 3, 14, 13, 0),
-        uniqueId: Math.round(Math.random() * 10000), // simulating server-side unique id generation
-      },
-      {
-        text: "Yes, and I use Gifted Messenger!",
-        name: 'Awesome Developer',
-        image: null,
-        position: 'right',
-        date: new Date(2016, 3, 14, 13, 1),
-        uniqueId: Math.round(Math.random() * 10000), // simulating server-side unique id generation
-      },
-    ];
+    return [];
   }
 
   setMessageStatus(uniqueId, status) {
@@ -129,7 +110,7 @@ class MessengerScene extends Component {
 
     // Send message.text to your server
     // this.socket.send(JSON.stringify(message));
-    this.socket.emit('new message', {data: message});
+    this.socket.emit('new message',  message);
 
     // simulating server-side unique id generation    
     message.uniqueId = Math.round(Math.random() * 10000); 
@@ -142,6 +123,8 @@ class MessengerScene extends Component {
   handleReceive(message = {}) {
     // make sure that your message contains :
     // text, name, image, position: 'left', date, uniqueId
+    message.position = 'left';
+    message.image = null;
     this.setMessages(this._messages.concat(message));
   }
 
