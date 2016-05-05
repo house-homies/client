@@ -10,7 +10,7 @@ import React, {
 } from 'react-native';
 
 var Router = require('./Router.js');
-var HORSE = require('./HORSE/HORSE.JS');
+var getName = require('./nameGen.js');
 
 class SettingsScene extends Component {
   constructor(props) {
@@ -33,7 +33,7 @@ class SettingsScene extends Component {
       <View style={styles.container}>
         <Text>You are currently {this.state.username}.</Text>
         <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
-          let newName = HORSE.RANDOMHORSENAME();
+          let newName = getName();
           AsyncStorage.setItem("username", newName);
           this.setState({username: newName});
         }}>

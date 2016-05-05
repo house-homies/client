@@ -9,7 +9,7 @@ import React, {
 } from 'react-native';
 
 var Router = require('./Router.js');
-var HORSE = require('./HORSE/HORSE.JS');
+var getName = require('./nameGen.js');
 
 class JoinRoomScene extends Component {
   constructor(props) {
@@ -38,7 +38,7 @@ class JoinRoomScene extends Component {
       var username = await AsyncStorage.getItem("username");
       if (username === null) {
         // generate username
-        var username = HORSE.RANDOMHORSENAME();
+        var username = getName();
         AsyncStorage.setItem("username", username);
       }
     } catch (error) {}

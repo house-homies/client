@@ -12,6 +12,7 @@
     "react-native-button": "^1.4.2",
     "react-native-communications": "^1.0.1",
     "react-native-extra-dimensions-android": "^0.17.0",
-    "react-native-gifted-messenger": "*"
+    "react-native-gifted-messenger": "*",
+    "starwars-names-mb": "^1.1.0"
   }
 }
