@@ -7,16 +7,16 @@ import React, {
 var Button = require('react-native-button');
 
 let Router = {
+  RoomId: "House Homies",
   MessengerScene() {
     return {
       getSceneClass() {
         return require('./MessengerScene');
       },
       getTitle() {
-        return 'House Homies';
+        return Router.RoomId;
       },
-      renderRightButton(navigator) {
-        return (
+      renderRightButton(navigator) { return (
           <Button onPress={() => {
             let route = Router.SettingsScene();
             navigator.push(route);

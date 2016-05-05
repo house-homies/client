@@ -12,7 +12,6 @@ import React, {
   Component,
 } from 'react-native';
 
-var ExtraDimensions = require('react-native-extra-dimensions-android');
 var GiftedMessenger = require('react-native-gifted-messenger');
 var Communications = require('react-native-communications');
 
@@ -28,6 +27,9 @@ class MessengerScene extends Component {
   constructor(props) {
     super(props);
 
+    // this.socket = new WebSocket("ws://iccroutes.com:5000");
+    this.socket = new WebSocket("ws://localhost:8000");
+
     this._isMounted = false;
     this._messages = this.getInitialMessages();
 
@@ -39,8 +41,6 @@ class MessengerScene extends Component {
       roomId: '',
       username: '',
     };
-
-
   }
 
   componentDidMount() {
@@ -59,6 +59,10 @@ class MessengerScene extends Component {
       }
     });
     this._isMounted = true;
+
+    this.socket.onmessage = (msg) => {
+      this.handleReceive(JSON.parse(msg.data));
+    };
 
     setTimeout(() => {
       this.setState({
@@ -140,17 +144,14 @@ class MessengerScene extends Component {
   }
 
   handleSend(message = {}) {
+    message.name = this.state.username;
 
-    // Your logic here
     // Send message.text to your server
+    this.socket.send(JSON.stringify(message));
 
-    message.uniqueId = Math.round(Math.random() * 10000); // simulating server-side unique id generation
+    // simulating server-side unique id generation    
+    message.uniqueId = Math.round(Math.random() * 10000); 
     this.setMessages(this._messages.concat(message));
-
-    // mark the sent message as Seen
-    setTimeout(() => {
-      this.setMessageStatus(message.uniqueId, 'Seen'); // here you can replace 'Seen' by any string you want
-    }, 1000);
 
     // if you couldn't send the message to your server :
     // this.setMessageStatus(message.uniqueId, 'ErrorButton');
@@ -172,8 +173,6 @@ class MessengerScene extends Component {
 
   render() {
     return (
-      <View>
-      <Text>In room {this.state.roomId}.</Text>
       <GiftedMessenger
         ref={(c) => this._GiftedMessenger = c}
 
@@ -198,11 +197,9 @@ class MessengerScene extends Component {
 
         typingMessage={this.state.typingMessage}
       />
-      </View>
     );
   }
 
 }
-
 
 module.exports = MessengerScene;
