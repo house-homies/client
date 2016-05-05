@@ -12,7 +12,8 @@ import React, {
   Component,
 } from 'react-native';
 
-var ExtraDimensions = require('react-native-extra-dimensions-android');
+require("./UserAgent");
+var io = require("socket.io-client/socket.io");
 var GiftedMessenger = require('react-native-gifted-messenger');
 var Communications = require('react-native-communications');
 
@@ -28,6 +29,7 @@ class MessengerScene extends Component {
   constructor(props) {
     super(props);
 
+    this.socket = io("http://iccroutes.com:5000", {jsonp:false, transports: ['websocket']});
     this._isMounted = false;
     this._messages = this.getInitialMessages();
 
@@ -39,8 +41,6 @@ class MessengerScene extends Component {
       roomId: '',
       username: '',
     };
-
-
   }
 
   componentDidMount() {
@@ -49,6 +49,7 @@ class MessengerScene extends Component {
         this.setState({roomId: '[ERROR]'});
       } else {
         this.setState({roomId: result,});
+        this.socket.emit('join room', result);
       }
     });
     AsyncStorage.getItem('username', (error, result) => {
@@ -58,31 +59,13 @@ class MessengerScene extends Component {
         this.setState({username: result,});
       }
     });
+
     this._isMounted = true;
 
-    setTimeout(() => {
-      this.setState({
-        typingMessage: 'React-Bot is typing a message...',
-      });
-    }, 1000); // simulating network
-
-    setTimeout(() => {
-      this.setState({
-        typingMessage: '',
-      });
-    }, 3000); // simulating network
-
-
-    setTimeout(() => {
-      this.handleReceive({
-        text: 'Hello Awesome Developer',
-        name: 'React-Bot',
-        image: {uri: 'https://facebook.github.io/react/img/logo_og.png'},
-        position: 'left',
-        date: new Date(),
-        uniqueId: Math.round(Math.random() * 10000), // simulating server-side unique id generation
-      });
-    }, 3300); // simulating network
+    this.socket.on('new message', (msg) => {
+      console.log(msg);
+      this.handleReceive(msg);
+    });
   }
 
   componentWillUnmount() {
@@ -90,24 +73,7 @@ class MessengerScene extends Component {
   }
 
   getInitialMessages() {
-    return [
-      {
-        text: 'Are you building a chat app?',
-        name: 'React-Bot',
-        image: {uri: 'https://facebook.github.io/react/img/logo_og.png'},
-        position: 'left',
-        date: new Date(2016, 3, 14, 13, 0),
-        uniqueId: Math.round(Math.random() * 10000), // simulating server-side unique id generation
-      },
-      {
-        text: "Yes, and I use Gifted Messenger!",
-        name: 'Awesome Developer',
-        image: null,
-        position: 'right',
-        date: new Date(2016, 3, 14, 13, 1),
-        uniqueId: Math.round(Math.random() * 10000), // simulating server-side unique id generation
-      },
-    ];
+    return [];
   }
 
   setMessageStatus(uniqueId, status) {
@@ -140,17 +106,15 @@ class MessengerScene extends Component {
   }
 
   handleSend(message = {}) {
+    message.name = this.state.username;
 
-    // Your logic here
     // Send message.text to your server
+    // this.socket.send(JSON.stringify(message));
+    this.socket.emit('new message',  message);
 
-    message.uniqueId = Math.round(Math.random() * 10000); // simulating server-side unique id generation
+    // simulating server-side unique id generation    
+    message.uniqueId = Math.round(Math.random() * 10000); 
     this.setMessages(this._messages.concat(message));
-
-    // mark the sent message as Seen
-    setTimeout(() => {
-      this.setMessageStatus(message.uniqueId, 'Seen'); // here you can replace 'Seen' by any string you want
-    }, 1000);
 
     // if you couldn't send the message to your server :
     // this.setMessageStatus(message.uniqueId, 'ErrorButton');
@@ -159,6 +123,8 @@ class MessengerScene extends Component {
   handleReceive(message = {}) {
     // make sure that your message contains :
     // text, name, image, position: 'left', date, uniqueId
+    message.position = 'left';
+    message.image = null;
     this.setMessages(this._messages.concat(message));
   }
 
@@ -172,8 +138,6 @@ class MessengerScene extends Component {
 
   render() {
     return (
-      <View>
-      <Text>In room {this.state.roomId}.</Text>
       <GiftedMessenger
         ref={(c) => this._GiftedMessenger = c}
 
@@ -198,11 +162,9 @@ class MessengerScene extends Component {
 
         typingMessage={this.state.typingMessage}
       />
-      </View>
     );
   }
 
 }
-
 
 module.exports = MessengerScene;

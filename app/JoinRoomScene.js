@@ -48,6 +48,7 @@ class JoinRoomScene extends Component {
     // TODO: set room ID in local storage
     this.setName();
     AsyncStorage.setItem("roomId", roomId);
+    Router.RoomId = roomId;
     let route = Router.MessengerScene();
     this.props.navigator.replace(route);
   }
