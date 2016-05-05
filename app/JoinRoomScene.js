@@ -76,7 +76,7 @@ class JoinRoomScene extends Component {
           style={styles.textInput}
           onChangeText={(text) => this.setState({text})}
           value={this.state.text} />
-        <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
+        <TouchableHighlight underlayColor={'#0061cc'} style={styles.button} onPress={()=>{
           this.joinRoom(this.state.text);
         }}>
           <View>
@@ -86,7 +86,7 @@ class JoinRoomScene extends Component {
         <Text>
           OR
         </Text>
-        <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
+        <TouchableHighlight underlayColor={'#0061cc'} style={styles.button} onPress={()=>{
           this.generateNewBuilding();
         }}>
           <View>
@@ -104,19 +104,45 @@ const text = {
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'column',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    padding: 15,
+  },
+  usernameInfo: {
+    flex: 3,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  roomInfo: {
+    flex: 4,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 30,
+  },
+  basicText: {
+    textAlign: 'center',
+    fontSize: 15,
   },
   textInput: {
     height: 40,
+    padding: 7,
     borderColor: 'gray',
     borderWidth: 1,
   },
   button: {
-    backgroundColor: 'gray',
-    padding: 5,
+    backgroundColor: '#007aff',
+    paddingTop: 7,
+    paddingRight: 14,
+    paddingBottom: 7,
+    paddingLeft: 14,
+    borderRadius: 7,
+    margin: 7,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
   },
 });
 

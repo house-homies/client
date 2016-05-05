@@ -31,38 +31,49 @@ class SettingsScene extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Text>You are currently {this.state.username}.</Text>
-        <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
-          let newName = HORSE.RANDOMHORSENAME();
-          AsyncStorage.setItem("username", newName);
-          this.setState({username: newName});
-        }}>
-          <View>
-            <Text style={styles.buttonText}>Reroll Username</Text>
-          </View>
-        </TouchableHighlight>
+        <View style={styles.usernameInfo}>
+          <Text style={styles.basicText}>You are currently {this.state.username}.</Text>
+          <TouchableHighlight
+            underlayColor={'#0055b2'}
+            style={styles.button}
+            onPress={()=>{
+              let newName = HORSE.RANDOMHORSENAME();
+              AsyncStorage.setItem("username", newName);
+              this.setState({username: newName});
+            }}>
+            <View>
+              <Text style={styles.buttonText}>Reroll Username</Text>
+            </View>
+          </TouchableHighlight>
+        </View>
 
-        <Text>Press the button below to leave the room. Make sure you have the access
-        code if you need to rejoin!</Text>
-        <TouchableHighlight underlayColor={'white'} style={styles.button} onPress={()=>{
-          Alert.alert(
-            'Are you sure?',
-            'Once you leave this room, you\'ll need the access code to rejoin again.',
-            [
-              {text: 'Cancel', onPress: () => {}},
-              {text: 'I\'m sure!', onPress: () => {
-                AsyncStorage.removeItem('roomId');
-                let route = Router.JoinRoomScene();
-                this.props.navigator.replaceAtIndex(route, 0);
-                this.props.navigator.popToTop();
-              }}
-            ]
-          );
-        }}>
-          <View>
-            <Text style={styles.buttonText}>Leave Room</Text>
-          </View>
-        </TouchableHighlight>
+        <View style={styles.roomInfo}>
+          <Text style={styles.basicText}>
+            Ready for a new building?
+          </Text>
+          <TouchableHighlight
+            underlayColor={'#0055b2'}
+            style={styles.button}
+            onPress={()=>{
+              Alert.alert(
+                'Are you sure?',
+                'Once you leave this room, you\'ll need the access code to rejoin again.',
+                [
+                  {text: 'Cancel', onPress: () => {}},
+                  {text: 'I\'m sure!', onPress: () => {
+                    AsyncStorage.removeItem('roomId');
+                    let route = Router.JoinRoomScene();
+                    this.props.navigator.replaceAtIndex(route, 0);
+                    this.props.navigator.popToTop();
+                  }}
+                ]
+              );
+            }}>
+            <View>
+              <Text style={styles.buttonText}>Leave Building</Text>
+            </View>
+          </TouchableHighlight>
+        </View>
       </View>
     );
   }
@@ -70,10 +81,26 @@ class SettingsScene extends Component {
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'column',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    padding: 15,
+  },
+  usernameInfo: {
+    flex: 3,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  roomInfo: {
+    flex: 4,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 30,
+  },
+  basicText: {
+    textAlign: 'center',
+    fontSize: 15,
   },
   textInput: {
     height: 40,
@@ -81,8 +108,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   button: {
-    backgroundColor: 'gray',
-    padding: 5,
+    backgroundColor: '#007aff',
+    paddingTop: 7,
+    paddingRight: 14,
+    paddingBottom: 7,
+    paddingLeft: 14,
+    borderRadius: 7,
+    margin: 7,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
   },
 });
 
