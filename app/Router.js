@@ -1,7 +1,9 @@
 import React, {
   AsyncStorage,
-  StatusBar,
+  Navigator,
   Platform,
+  StatusBar,
+  StyleSheet,
 } from 'react-native';
 
 var Button = require('react-native-button');
@@ -17,7 +19,7 @@ let Router = {
         return Router.RoomId;
       },
       renderRightButton(navigator) { return (
-          <Button onPress={() => {
+          <Button style={styles.rightNavButton} onPress={() => {
             let route = Router.SettingsScene();
             navigator.push(route);
           }}>
@@ -38,7 +40,7 @@ let Router = {
       },
       renderLeftButton(navigator) {
         return (
-          <Button onPress={() => { navigator.pop() }}>
+          <Button style={styles.leftNavButton} onPress={() => { navigator.pop() }}>
             Back
           </Button>
         );
@@ -58,5 +60,15 @@ let Router = {
   },
 };
 
+const styles = StyleSheet.create({
+  leftNavButton: {
+    marginTop: 11,
+    marginLeft: 7,
+  },
+  rightNavButton: {
+    marginTop: 11,
+    marginRight: 7,
+  }
+});
 
 module.exports = Router;

@@ -1,15 +1,15 @@
 'use strict';
 
 import React, {
-  AsyncStorage,
-  Linking,
-  Platform,
   ActionSheetIOS,
-  Dimensions,
-  View,
-  Text,
-  Navigator,
+  AsyncStorage,
   Component,
+  Dimensions,
+  Linking,
+  Navigator,
+  Platform,
+  Text,
+  View,
 } from 'react-native';
 
 require("./UserAgent");
