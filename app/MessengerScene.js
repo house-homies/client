@@ -26,8 +26,8 @@ if (Platform.OS === 'android') {
   var STATUS_BAR_HEIGHT = ExtraDimensions.get('STATUS_BAR_HEIGHT');
 }
 
-const ENDPOINT = "http://localhost:5000"
-// const ENDPOINT = "http://iccroutes.com:5000"
+// const ENDPOINT = "http://localhost:5000"
+const ENDPOINT = "http://iccroutes.com:5000"
 
 class MessengerScene extends Component {
 
@@ -36,14 +36,7 @@ class MessengerScene extends Component {
 
     this.rsa = new RSAKey();
 
-    // let roomId     = AsyncStorage.getItem('roomId').done();
-    // let messages   = AsyncStorage.getItem('messages_' + roomId).done();
-    // alert(messages);
-
-    // this._messages = (messages) ? JSON.parse(messages) : [];
-
     this.state = {
-      // messages:   this._messages,
       roomId:     '',
       username:   '',
       publicKey:  {},
@@ -81,7 +74,6 @@ class MessengerScene extends Component {
 
     this._messages = (messages) ? JSON.parse(messages) : [];
 
-    // this.state.messages not being set until first setMessages
     this.setState({
       messages:   this._messages,
       roomId:     roomId,
