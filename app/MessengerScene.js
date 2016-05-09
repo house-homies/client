@@ -2,6 +2,7 @@
 
 import React, {
   ActionSheetIOS,
+  Alert,
   AsyncStorage,
   Component,
   Dimensions,
@@ -13,9 +14,11 @@ import React, {
 } from 'react-native';
 
 require("./UserAgent");
+var Router = require('./Router.js');
 var io = require("socket.io-client/socket.io");
 var GiftedMessenger = require('react-native-gifted-messenger');
 var Communications = require('react-native-communications');
+var RSAKey = require('react-native-rsa');
 
 var STATUS_BAR_HEIGHT = Navigator.NavigationBar.Styles.General.StatusBarHeight;
 if (Platform.OS === 'android') {
@@ -23,117 +26,103 @@ if (Platform.OS === 'android') {
   var STATUS_BAR_HEIGHT = ExtraDimensions.get('STATUS_BAR_HEIGHT');
 }
 
+// const ENDPOINT = "http://localhost:5000"
+const ENDPOINT = "http://iccroutes.com:5000"
 
 class MessengerScene extends Component {
 
   constructor(props) {
-    super(props);
+    super(props)
 
-    this.socket = io("http://iccroutes.com:5000", {jsonp:false, transports: ['websocket']});
-    this._isMounted = false;
-    this._messages = this.getInitialMessages();
+    this.rsa = new RSAKey();
 
     this.state = {
-      messages: this._messages,
-      isLoadingEarlierMessages: false,
-      typingMessage: '',
-      allLoaded: false,
-      roomId: '',
-      username: '',
+      roomId:     '',
+      username:   '',
+      publicKey:  {},
+      privateKey: {},
     };
   }
 
-  componentDidMount() {
-    AsyncStorage.getItem('roomId', (error, result) => {
-      if (error) {
-        this.setState({roomId: '[ERROR]'});
-      } else {
-        this.setState({roomId: result,});
-        this.socket.emit('join room', result);
-      }
-    });
-    AsyncStorage.getItem('username', (error, result) => {
-      if (error) {
-        this.setState({username: '[ERROR]'});
-      } else {
-        this.setState({username: result,});
-      }
-    });
-
-    this._isMounted = true;
-
-    this.socket.on('new message', (msg) => {
-      console.log(msg);
-      this.handleReceive(msg);
-    });
-  }
-
-  componentWillUnmount() {
-    this._isMounted = false;
-  }
-
-  getInitialMessages() {
-    return [];
-  }
-
-  setMessageStatus(uniqueId, status) {
-    let messages = [];
-    let found = false;
-
-    for (let i = 0; i < this._messages.length; i++) {
-      if (this._messages[i].uniqueId === uniqueId) {
-        let clone = Object.assign({}, this._messages[i]);
-        clone.status = status;
-        messages.push(clone);
-        found = true;
-      } else {
-        messages.push(this._messages[i]);
+  connectionError() {
+    let reconnectBtn = {
+      text: 'Reconnect', 
+      onPress: () => { 
+        this.socket.connect() 
       }
     }
 
-    if (found === true) {
-      this.setMessages(messages);
+    let cancelBtn = {
+      text: 'Cancel', 
+      onPress: () => {
+        AsyncStorage.removeItem("roomId");
+        let route = Router.JoinRoomScene();
+        this.props.navigator.replace(route);
+      }, 
+      style: 'cancel'
     }
+
+    Alert.alert('Error', 'Failed connecting to room', [reconnectBtn, cancelBtn])
   }
 
-  setMessages(messages) {
-    this._messages = messages;
+  async componentDidMount() {
+    let roomId     = await AsyncStorage.getItem('roomId');
+    let username   = await AsyncStorage.getItem('username');
+    let messages   = await AsyncStorage.getItem('messages_' + roomId)
+    let publicKey  = await AsyncStorage.getItem('publicKey');
+    let privateKey = await AsyncStorage.getItem('privateKey');
 
-    // append the message
+    this._messages = (messages) ? JSON.parse(messages) : [];
+
     this.setState({
-      messages: messages,
+      messages:   this._messages,
+      roomId:     roomId,
+      username:   username,
+      publicKey:  publicKey,
+      privateKey: privateKey
     });
+
+    this.socket = io(ENDPOINT, {jsonp: false, transports: ['websocket'], reconnection: false})
+    this.socket.on('connect_error', ()    => this.connectionError())
+    this.socket.on('new message',   (msg) => this.handleReceive(msg))
+  }
+
+  async setMessages(messages) {
+    this._messages = messages;
+    this.setState({messages: messages});
+    AsyncStorage.setItem('messages_' + this.state.roomId, 
+      JSON.stringify(this._messages));
   }
 
   handleSend(message = {}) {
-    message.name = this.state.username;
+    message.pkey = this.state.privateKey;
 
-    // Send message.text to your server
-    // this.socket.send(JSON.stringify(message));
-    this.socket.emit('new message',  message);
+    // Encrypt message
+    this.rsa.setPublicString(this.state.publicKey);
+    var originText  = message.text;
+    var encryptText = this.rsa.encrypt(originText);
+    message.text    = encryptText;
 
-    // simulating server-side unique id generation    
-    message.uniqueId = Math.round(Math.random() * 10000); 
+    // Send message
+    this.socket.emit('new message', message);
+
+    // Simulate server-side unique id generation
+    message.uniqueId = Math.round(Math.random() * 10000);
+    message.text     = originText;
+
     this.setMessages(this._messages.concat(message));
-
-    // if you couldn't send the message to your server :
-    // this.setMessageStatus(message.uniqueId, 'ErrorButton');
   }
 
   handleReceive(message = {}) {
-    // make sure that your message contains :
-    // text, name, image, position: 'left', date, uniqueId
+    // message must contain: text, name, image, position: 'left', date, uniqueId
     message.position = 'left';
-    message.image = null;
+    message.image    = null;
+
+    // Decrypt
+    this.rsa.setPrivateString(message.pkey);
+    message.text = this.rsa.decrypt(message.text);
+
     this.setMessages(this._messages.concat(message));
-  }
-
-  onErrorButtonPress(message = {}) {
-    // Your logic here
-    // re-send the failed message
-
-    // remove the status
-    this.setMessageStatus(message.uniqueId, '');
   }
 
   render() {
@@ -151,20 +140,15 @@ class MessengerScene extends Component {
         autoFocus={false}
         messages={this.state.messages}
         handleSend={this.handleSend.bind(this)}
-        onErrorButtonPress={this.onErrorButtonPress.bind(this)}
         maxHeight={Dimensions.get('window').height - Navigator.NavigationBar.Styles.General.NavBarHeight - STATUS_BAR_HEIGHT}
-
         loadEarlierMessagesButton={false}
-
-        senderName='Awesome Developer'
+        senderName={this.state.username}
         senderImage={null}
         displayNames={true}
-
-        typingMessage={this.state.typingMessage}
+        displayNamesInsideBubble={true}
       />
     );
   }
-
 }
 
 module.exports = MessengerScene;
