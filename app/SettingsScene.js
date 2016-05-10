@@ -1,4 +1,5 @@
 import React, {
+  Clipboard,
   AsyncStorage,
   Alert,
   Component,
@@ -15,16 +16,18 @@ var getName = require('./nameGen.js');
 class SettingsScene extends Component {
   constructor(props) {
     super(props);
-    this.state = {username: ''};
+    this.state = {
+      username: '',
+      roomId:   '',
+    };
   }
 
-  componentDidMount() {
-    AsyncStorage.getItem('username', (error, result) => {
-      if (error) {
-        this.setState({username: '[ERROR]'});
-      } else {
-        this.setState({username: result,});
-      }
+  async componentDidMount() {
+    let username = await AsyncStorage.getItem('username');
+    let roomId = await AsyncStorage.getItem('roomId');
+    this.setState({
+      username: username,
+      roomId:   roomId,
     });
   }
 
@@ -74,6 +77,23 @@ class SettingsScene extends Component {
             </View>
           </TouchableHighlight>
         </View>
+
+        <View style={styles.copyGroup}>
+          <Text style={styles.basicText}>
+            Copy Room to Clipboard
+          </Text>
+          <TouchableHighlight
+            underlayColor={'#0055b2'}
+            style={styles.button}
+            onPress={()=> {
+              Clipboard.setString(this.state.roomId)
+              alert("Copied to 🍆"); 
+            }}>
+            <View>
+              <Text style={styles.buttonText}>Copy "{this.state.roomId}"</Text>
+            </View>
+          </TouchableHighlight>
+        </View>
       </View>
     );
   }
@@ -88,15 +108,15 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   usernameInfo: {
-    flex: 3,
-    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   roomInfo: {
-    flex: 4,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
     paddingTop: 30,
+    alignItems: 'center',
+  },
+  copyGroup: {
+    paddingTop: 30,
+    alignItems: 'center',
   },
   basicText: {
     textAlign: 'center',
