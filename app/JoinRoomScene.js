@@ -51,8 +51,7 @@ class JoinRoomScene extends Component {
       var username = await AsyncStorage.getItem("username");
       if (username === null) {
         // generate username
-        var username = getName();
-        AsyncStorage.setItem("username", 'butts');
+        AsyncStorage.setItem("username", getName());
       }
     } catch (error) {}
   }
