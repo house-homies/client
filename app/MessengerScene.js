@@ -85,6 +85,7 @@ class MessengerScene extends Component {
     this.socket = io(ENDPOINT, {jsonp: false, transports: ['websocket'], reconnection: false})
     this.socket.on('connect_error', ()    => this.connectionError())
     this.socket.on('new message',   (msg) => this.handleReceive(msg))
+    this.socket.emit('join room', roomId);
   }
 
   async setMessages(messages) {
@@ -95,7 +96,8 @@ class MessengerScene extends Component {
   }
 
   handleSend(message = {}) {
-    message.pkey = this.state.privateKey;
+    message.pkey   = this.state.privateKey;
+    message.roomId = this.state.roomId;
 
     // Encrypt message
     this.rsa.setPublicString(this.state.publicKey);
