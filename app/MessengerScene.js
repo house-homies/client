@@ -88,6 +88,10 @@ class MessengerScene extends Component {
     this.socket.emit('join room', roomId);
   }
 
+  async componentWillUnmount() {
+    this.socket.disconnect();
+  }
+
   async setMessages(messages) {
     this._messages = messages;
     this.setState({messages: messages});
