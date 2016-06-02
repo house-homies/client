@@ -46,19 +46,19 @@ class MessengerScene extends Component {
 
   connectionError() {
     let reconnectBtn = {
-      text: 'Reconnect', 
-      onPress: () => { 
-        this.socket.connect() 
+      text: 'Reconnect',
+      onPress: () => {
+        this.socket.connect()
       }
     }
 
     let cancelBtn = {
-      text: 'Cancel', 
+      text: 'Cancel',
       onPress: () => {
         AsyncStorage.removeItem("roomId");
         let route = Router.JoinRoomScene();
         this.props.navigator.replace(route);
-      }, 
+      },
       style: 'cancel'
     }
 
@@ -95,7 +95,7 @@ class MessengerScene extends Component {
   async setMessages(messages) {
     this._messages = messages;
     this.setState({messages: messages});
-    AsyncStorage.setItem('messages_' + this.state.roomId, 
+    AsyncStorage.setItem('messages_' + this.state.roomId,
       JSON.stringify(this._messages));
   }
 
@@ -121,7 +121,7 @@ class MessengerScene extends Component {
 
   handleReceive(message = {}) {
     // message must contain: text, name, image, position: 'left', date, uniqueId
-    message.position = 'left';
+    message.position = this.iSentThisMessage(message) ? 'right' : 'left';
     message.image    = null;
 
     // Decrypt
@@ -129,6 +129,19 @@ class MessengerScene extends Component {
     message.text = this.rsa.decrypt(message.text);
 
     this.setMessages(this._messages.concat(message));
+  }
+
+  iSentThisMessage(message) {
+    return message.name == this.state.username;
+  }
+
+  loadEarlierMessages() {
+    // send room ID
+    this.setMessages([]);
+    this.socket.emit("previous messages", roomId, function(error, messages) {
+      if (error) throw error;
+      messages.map(handleReceive);
+    });
   }
 
   render() {
@@ -147,7 +160,8 @@ class MessengerScene extends Component {
         messages={this.state.messages}
         handleSend={this.handleSend.bind(this)}
         maxHeight={Dimensions.get('window').height - Navigator.NavigationBar.Styles.General.NavBarHeight - STATUS_BAR_HEIGHT}
-        loadEarlierMessagesButton={false}
+        loadEarlierMessagesButton={true}
+        onLoadEarlierMessages=this.loadEarlierMessages
         senderName={this.state.username}
         senderImage={null}
         displayNames={true}
