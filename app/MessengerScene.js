@@ -19,6 +19,8 @@ var io = require("socket.io-client/socket.io");
 var GiftedMessenger = require('react-native-gifted-messenger');
 var Communications = require('react-native-communications');
 var RSAKey = require('react-native-rsa');
+var AES = require('react-native-aes');
+var Buffer = require('buffer').Buffer;
 
 var STATUS_BAR_HEIGHT = Navigator.NavigationBar.Styles.General.StatusBarHeight;
 if (Platform.OS === 'android') {
@@ -28,6 +30,7 @@ if (Platform.OS === 'android') {
 
 // const ENDPOINT = "http://localhost:5000"
 const ENDPOINT = "http://iccroutes.com:5000"
+// const ENDPOINT = "https://7fd4c7b4.ngrok.io/"
 
 class MessengerScene extends Component {
 
@@ -46,24 +49,37 @@ class MessengerScene extends Component {
 
   connectionError() {
     let reconnectBtn = {
-      text: 'Reconnect', 
-      onPress: () => { 
-        this.socket.connect() 
+      text: 'Reconnect',
+      onPress: () => {
+        this.socket.connect()
       }
     }
 
     let cancelBtn = {
-      text: 'Cancel', 
+      text: 'Cancel',
       onPress: () => {
         AsyncStorage.removeItem("roomId");
         let route = Router.JoinRoomScene();
         this.props.navigator.replace(route);
-      }, 
+      },
       style: 'cancel'
     }
 
     Alert.alert('Error', 'Failed connecting to room', [reconnectBtn, cancelBtn])
   }
+
+  async getRoomKey(roomId) {
+
+    var data = {
+      roomId: roomId,
+      publicKey: this.state.publicKey
+    };
+
+    this.rsa.setPublicString(serverPKey);
+    AsyncStorage.setItem('payload', this.rsa.encrypt(JSON.stringify(data)));
+
+  }
+
 
   async componentDidMount() {
     let roomId     = await AsyncStorage.getItem('roomId');
@@ -83,9 +99,13 @@ class MessengerScene extends Component {
     });
 
     this.socket = io(ENDPOINT, {jsonp: false, transports: ['websocket'], reconnection: false})
-    this.socket.on('connect_error', ()    => this.connectionError())
-    this.socket.on('new message',   (msg) => this.handleReceive(msg))
-    this.socket.emit('join room', roomId);
+    await this.socket.emit('request_server_key');
+    await this.socket.on('broadcast_key', (key) => this.handleServerKey(key));
+    await this.socket.on('room_key', (key) => this.handleRoomKey(key));
+    await this.socket.emit('join room', roomId);
+
+    this.socket.on('connect_error', ()    => this.connectionError());
+    this.socket.on('new message',   (msg) => this.handleReceive(msg));
   }
 
   async componentWillUnmount() {
@@ -95,38 +115,79 @@ class MessengerScene extends Component {
   async setMessages(messages) {
     this._messages = messages;
     this.setState({messages: messages});
-    AsyncStorage.setItem('messages_' + this.state.roomId, 
+    AsyncStorage.setItem('messages_' + this.state.roomId,
       JSON.stringify(this._messages));
   }
 
+  async handleRoomKey(key) {
+    console.log(key);
+    this.rsa.setPrivateString(this.state.privateKey);
+
+    this.setState({
+      roomKey: this.rsa.decrypt(key)
+    })
+  }
+
+  async handleServerKey(key) {
+    let roomId = await AsyncStorage.getItem('roomId');
+    AsyncStorage.setItem('serverPKey', key);
+
+    this.rsa.setPublicString(key);
+    roomId = this.rsa.encrypt(roomId);
+
+    var payload = {
+      pkey: this.state.publicKey,
+      roomId: roomId,
+    };
+
+    console.log('server key' + key);
+    try {
+      this.socket.emit('request_room_key', payload);
+      console.log(payload);
+      console.log('got here 69');
+    } catch (e) {
+      console.log("error: " + e);
+    }
+  }
+
   handleSend(message = {}) {
-    message.pkey   = this.state.privateKey;
-    message.roomId = this.state.roomId;
+    let roomKey = this.state.roomKey;
+    let roomId = this.state.roomId; // fix this, should not be sent, but stored on server.
+    // console.log(roomKey);
+    // console.log(message);
 
-    // Encrypt message
-    this.rsa.setPublicString(this.state.publicKey);
-    var originText  = message.text;
-    var encryptText = this.rsa.encrypt(originText);
-    message.text    = encryptText;
-
-    // Send message
-    this.socket.emit('new message', message);
-
-    // Simulate server-side unique id generation
-    message.uniqueId = Math.round(Math.random() * 10000);
-    message.text     = originText;
+    var bufferInput = new Buffer(message.text);
+    var keyBuffer = new Buffer(roomKey, 'base64');
+    var cipherName = 'AES-256-CBC';
+    var socket = this.socket;
 
     this.setMessages(this._messages.concat(message));
+
+    AES.encryptWithCipher(cipherName, bufferInput, keyBuffer, function (err, encrypted) {
+      message.text = encrypted;
+      message.roomId = roomId;
+      socket.emit('new message', message);
+    });
+
+
   }
 
   handleReceive(message = {}) {
-    // message must contain: text, name, image, position: 'left', date, uniqueId
-    message.position = 'left';
-    message.image    = null;
+    let roomKey = this.state.roomKey;
 
-    // Decrypt
-    this.rsa.setPrivateString(message.pkey);
-    message.text = this.rsa.decrypt(message.text);
+    var bufferInput = new Buffer(message.text);
+    var keyBuffer = new Buffer(roomKey, 'base64');
+    var cipherName = 'AES-256-CBC';
+    var socket = this.socket;
+
+    AES.decryptWithCipher(
+      cipherName, message.text.ciphertext, roomKey, message.text.iv, function (err, plaintext) {
+        if (plaintext.toString() !== stringInput) {
+          throw new Error('time to report an issue!')
+        }
+        message.text = plaintext;
+      }
+    )
 
     this.setMessages(this._messages.concat(message));
   }
