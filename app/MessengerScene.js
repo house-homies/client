@@ -99,12 +99,13 @@ class MessengerScene extends Component {
     });
 
     this.socket = io(ENDPOINT, {jsonp: false, transports: ['websocket'], reconnection: false})
-    this.socket.on('connect_error', ()    => this.connectionError())
-    this.socket.on('new message',   (msg) => this.handleReceive(msg))
-    this.socket.emit('request_server_key');
-    this.socket.on('broadcast_key', (key) => this.handleServerKey(key))
-    this.socket.on('room_key', (key) => this.handleRoomKey(key));
-    this.socket.emit('join room', roomId);
+    await this.socket.emit('request_server_key');
+    await this.socket.on('broadcast_key', (key) => this.handleServerKey(key));
+    await this.socket.on('room_key', (key) => this.handleRoomKey(key));
+    await this.socket.emit('join room', roomId);
+
+    this.socket.on('connect_error', ()    => this.connectionError());
+    this.socket.on('new message',   (msg) => this.handleReceive(msg));
   }
 
   async componentWillUnmount() {
@@ -119,8 +120,12 @@ class MessengerScene extends Component {
   }
 
   async handleRoomKey(key) {
-    console.log(this.rsa.decrypt(key));
-    console.log('hello');
+    console.log(key);
+    this.rsa.setPrivateString(this.state.privateKey);
+
+    this.setState({
+      roomKey: this.rsa.decrypt(key)
+    })
   }
 
   async handleServerKey(key) {
@@ -134,41 +139,55 @@ class MessengerScene extends Component {
       pkey: this.state.publicKey,
       roomId: roomId,
     };
-    
+
     console.log('server key' + key);
-    this.socket.emit('request_room_key', payload);
+    try {
+      this.socket.emit('request_room_key', payload);
+      console.log(payload);
+      console.log('got here 69');
+    } catch (e) {
+      console.log("error: " + e);
+    }
   }
 
   handleSend(message = {}) {
-    // message.pkey   = this.state.privateKey;
-    // message.roomId = this.state.roomId;
-    //
-    // // Encrypt message
-    // this.rsa.setPublicString(this.state.publicKey);
-    // var originText  = message.text;
-    // var encryptText = this.rsa.encrypt(originText);
-    // message.text    = encryptText;
-    //
-    // // Send message
-    // this.socket.emit('new message', message);
-    //
-    // // Simulate server-side unique id generation
-    // message.uniqueId = Math.round(Math.random() * 10000);
-    // message.text     = originText;
+    let roomKey = this.state.roomKey;
+    let roomId = this.state.roomId; // fix this, should not be sent, but stored on server.
+    // console.log(roomKey);
+    // console.log(message);
+
+    var bufferInput = new Buffer(message.text);
+    var keyBuffer = new Buffer(roomKey, 'base64');
+    var cipherName = 'AES-256-CBC';
+    var socket = this.socket;
 
     this.setMessages(this._messages.concat(message));
+
+    AES.encryptWithCipher(cipherName, bufferInput, keyBuffer, function (err, encrypted) {
+      message.text = encrypted;
+      message.roomId = roomId;
+      socket.emit('new message', message);
+    });
+
+
   }
 
   handleReceive(message = {}) {
-    // message must contain: text, name, image, position: 'left', date, uniqueId
-    // message.position = 'left';
-    // message.image    = null;
-    //
-    // // Decrypt
-    // this.rsa.setPrivateString(message.pkey);
-    // // this.rsa.setPrivateEx(tester);
-    // // console.log(this.rsa.getPrivateString());
-    // message.text = this.rsa.decrypt(message.text);
+    let roomKey = this.state.roomKey;
+
+    var bufferInput = new Buffer(message.text);
+    var keyBuffer = new Buffer(roomKey, 'base64');
+    var cipherName = 'AES-256-CBC';
+    var socket = this.socket;
+
+    AES.decryptWithCipher(
+      cipherName, message.text.ciphertext, roomKey, message.text.iv, function (err, plaintext) {
+        if (plaintext.toString() !== stringInput) {
+          throw new Error('time to report an issue!')
+        }
+        message.text = plaintext;
+      }
+    )
 
     this.setMessages(this._messages.concat(message));
   }
