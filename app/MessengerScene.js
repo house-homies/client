@@ -85,6 +85,7 @@ class MessengerScene extends Component {
     let roomId     = await AsyncStorage.getItem('roomId');
     let username   = await AsyncStorage.getItem('username');
     let messages   = await AsyncStorage.getItem('messages_' + roomId)
+    // await AsyncStorage.setItem('messages_' + roomId, "");
     let publicKey  = await AsyncStorage.getItem('publicKey');
     let privateKey = await AsyncStorage.getItem('privateKey');
 
@@ -99,10 +100,10 @@ class MessengerScene extends Component {
     });
 
     this.socket = io(ENDPOINT, {jsonp: false, transports: ['websocket'], reconnection: false})
-    await this.socket.emit('request_server_key');
-    await this.socket.on('broadcast_key', (key) => this.handleServerKey(key));
-    await this.socket.on('room_key', (key) => this.handleRoomKey(key));
-    await this.socket.emit('join room', roomId);
+    this.socket.emit('request_server_key');
+    this.socket.on('broadcast_key', (key) => this.handleServerKey(key));
+    this.socket.on('room_key', (key) => this.handleRoomKey(key));
+    this.socket.emit('join room', roomId);
 
     this.socket.on('connect_error', ()    => this.connectionError());
     this.socket.on('new message',   (msg) => this.handleReceive(msg));
@@ -151,13 +152,10 @@ class MessengerScene extends Component {
   }
 
   handleSend(message = {}) {
-    let roomKey = this.state.roomKey;
     let roomId = this.state.roomId; // fix this, should not be sent, but stored on server.
-    // console.log(roomKey);
-    // console.log(message);
 
     var bufferInput = new Buffer(message.text);
-    var keyBuffer = new Buffer(roomKey, 'base64');
+    var keyBuffer = new Buffer(this.state.roomKey, 'base64');
     var cipherName = 'AES-256-CBC';
     var socket = this.socket;
 
@@ -173,23 +171,31 @@ class MessengerScene extends Component {
   }
 
   handleReceive(message = {}) {
-    let roomKey = this.state.roomKey;
+    console.log(this.state.roomKey);
+    var keyBuffer = new Buffer(this.state.roomKey, 'base64');
 
-    var bufferInput = new Buffer(message.text);
-    var keyBuffer = new Buffer(roomKey, 'base64');
+    var bufferInput = Buffer.from(message.text.ciphertext, 'base64');
+    var ivBuffer = Buffer.from(message.text.iv, 'base64');
+
     var cipherName = 'AES-256-CBC';
     var socket = this.socket;
 
-    AES.decryptWithCipher(
-      cipherName, message.text.ciphertext, roomKey, message.text.iv, function (err, plaintext) {
-        if (plaintext.toString() !== stringInput) {
-          throw new Error('time to report an issue!')
-        }
-        message.text = plaintext;
+    console.log("ctxt: ", bufferInput);
+    console.log("iv: ", ivBuffer);
+    console.log("key: ", keyBuffer);
+
+    let self = this;
+    AES.decryptWithCipher(cipherName, bufferInput, keyBuffer, ivBuffer, function (err, plaintext) {
+        // message.text = String.fromCharCode.apply(null, plaintext);
+        // message.text = Buffer.from(plaintext, 'base64').toString();
+        message.text = plaintext.toString();
+        console.log(plaintext);
+        message.position = 'left';
+        message.image = null;
+        console.log(message.text);
+        self.setMessages(self._messages.concat(message));
       }
     )
-
-    this.setMessages(this._messages.concat(message));
   }
 
   render() {
