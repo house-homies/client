@@ -161,7 +161,7 @@ class MessengerScene extends Component {
         handleSend={this.handleSend.bind(this)}
         maxHeight={Dimensions.get('window').height - Navigator.NavigationBar.Styles.General.NavBarHeight - STATUS_BAR_HEIGHT}
         loadEarlierMessagesButton={true}
-        onLoadEarlierMessages=this.loadEarlierMessages
+        onLoadEarlierMessages={this.loadEarlierMessages}
         senderName={this.state.username}
         senderImage={null}
         displayNames={true}
